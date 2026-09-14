@@ -1,3 +1,4 @@
+import { LangProvider } from './i18n';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ChannelStrip from './components/ChannelStrip';
@@ -14,20 +15,22 @@ import Footer from './components/Footer';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <Hero />
-      <ChannelStrip />
-      <Maison />
-      <Expertises />
-      <GlobalPower />
-      <SubmitProject />
-      <RadioTV />
-      <GlobalVision />
-      <News />
-      <Partners />
-      <CTA />
-      <Footer />
-    </div>
+    <LangProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <Header />
+        <Hero />
+        <ChannelStrip />
+        <Maison />
+        <Expertises />
+        <GlobalPower />
+        <SubmitProject />
+        <RadioTV />
+        <GlobalVision />
+        <News />
+        <Partners />
+        <CTA />
+        <Footer />
+      </div>
+    </LangProvider>
   );
 }
