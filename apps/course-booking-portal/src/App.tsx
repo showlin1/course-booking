@@ -8,6 +8,8 @@ import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import Book from './pages/Book';
 import Locations from './pages/Locations';
+import Blog from './pages/Blog';
+import BlogPostPage from './pages/BlogPostPage';
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -31,6 +33,8 @@ export default function App() {
               <Route path="/courses/:slug" element={<CourseDetail />} />
               <Route path="/book/:slug" element={<Book />} />
               <Route path="/locations" element={<Locations />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="*" element={<Home />} />
             </Routes>
           </main>

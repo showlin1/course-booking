@@ -32,6 +32,7 @@ export default function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
           <NavLink to="/locations" className={link}>Locations</NavLink>
+          <NavLink to="/blog" className={link}>Blog</NavLink>
         </nav>
         <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">
           {open ? <X /> : <Menu />}
@@ -42,6 +43,7 @@ export default function Header() {
           <Link to="/" className="block py-2">Home</Link>
           <Link to="/course" className="block py-2">Course</Link>
           <Link to="/locations" className="block py-2">Locations</Link>
+          <Link to="/blog" className="block py-2">Blog</Link>
         </div>
       )}
     </header>
