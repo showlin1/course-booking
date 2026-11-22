@@ -12,12 +12,13 @@
 //     operators: contains, not, in, notIn, lt, lte, gt, gte
 //       `not: null` means "is set". An empty `in: []` matches nothing; an
 //       empty `notIn: []` applies no filter.
-//     sort is currently IGNORED here — it is stripped before the request.
-//       (it does work on zite.auth.findAllUsers). Order in SQL instead.
+//     sort: [{ field: "fieldName", direction: "asc" | "desc" }]
 //     limit defaults to 500, max 2000; offset is a row count (a number)
-//     a filter value of `undefined` is REJECTED (it would query unfiltered
-//       and match an arbitrary record). Check the value first.
+//     a filter value of `undefined` drops that filter and reads as if it weren't
+//       there. Check the value first: `{ owner: user?.id }` signed out reads every row.
 //   .findOne({ id?, filters?, fields? }) → T | undefined
+//     a filter value of `undefined`, or an `undefined` id with no filters, matches
+//       no record and returns undefined
 //   .create({ record }) → T
 //   .update({ id, record }) → { id: string, fields: Partial<T> }
 //   .delete({ id }) → { success: true, id: string }
@@ -60,6 +61,9 @@
 //   - Soft-deleted rows are excluded automatically — no WHERE deleted_at IS NULL
 //   - SELECT only — use .create/.update/.delete for writes
 //   - Load the "zite:sql" skill for full SQL reference (formulas, lookups, etc.)
+//
+// Link tables for zite.sql() JOINs (use these exact names):
+//   "BookingsCourses" — columns: "bookingsId", "coursesId" (joins "Bookings" and "Courses")
 import { createTableClient, createSqlClient, createAuthClient } from 'zitejs/runtime';
 
 /** An attachment as returned when reading a record. */
@@ -84,25 +88,73 @@ export type ZiteAttachmentInput =
   | { url: string; filename?: string }
   | ZiteAttachment;
 
-export interface NotificationLink {
-  path?: string;
-  params?: Record<string, string>;
-}
+/** A record in the "Courses" table, as it is read back. */
+export type CoursesRecordType = {
+  id: string;
+  /** Primary field. "Course Name" */
+  courseName?: string;
+  slug?: string;
+  /** "Price". Value is a raw number; display as currency with symbol "$", 2 decimal places, format: local (e.g. 1,000,000.50) */
+  price?: number;
+  imageUrl?: string;
+  /** "Schedule Start". Date-only field (YYYY-MM-DD string), null when unset, display as "local" format */
+  scheduleStart?: string;
+  /** "Schedule End". Date-only field (YYYY-MM-DD string), null when unset, display as "local" format */
+  scheduleEnd?: string;
+  classTime?: string;
+  /** "Sort Order". 1 decimal places, format: local (e.g. 1,000,000.50) */
+  sortOrder?: number;
+  /** Links to bookings ("Bookings"). "Bookings" */
+  bookings?: string | string[];
+};
 
-export interface NotificationsCreateParams {
-  recipients: string[];
-  title: string;
-  body?: string;
-  link?: NotificationLink;
-  path?: string;
-  params?: Record<string, string>;
-  payload?: Record<string, unknown>;
-  idempotencyKey?: string;
-}
+/** What you may write when creating or updating a record in the "Courses" table. */
+export type CoursesRecordInput = {
+  courseName: string | null;
+  slug: string | null;
+  price: string | number | null;
+  imageUrl: string | null;
+  scheduleStart: string | Date | null;
+  scheduleEnd: string | Date | null;
+  classTime: string | null;
+  sortOrder: string | number | null;
+  bookings: string | string[] | null;
+};
 
-export type NotificationsCreateResult =
-  | { created: number }
-  | { created: 0; preview: true; wouldCreate: number };
+/** A record in the "Bookings" table, as it is read back. */
+export type BookingsRecordType = {
+  id: string;
+  /** Primary field. "Full Name" */
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  /** Links to courses ("Courses"). "Course" */
+  course?: string | string[];
+  location?: "Thunder Bay" | "Nipigon" | "Terrace Bay" | string;
+  venue?: string;
+  /** "Session Date". Date-only field (YYYY-MM-DD string), null when unset, display as "local" format */
+  sessionDate?: string;
+  /** "Price". Value is a raw number; display as currency with symbol "$", 2 decimal places, format: local (e.g. 1,000,000.50) */
+  price?: number;
+  notes?: string;
+  status?: "Pending" | "Confirmed" | "Cancelled" | string;
+  /** Read-only. "Booked At". Auto-set when record was created (ISO 8601) */
+  bookedAt?: string;
+};
+
+/** What you may write when creating or updating a record in the "Bookings" table. */
+export type BookingsRecordInput = {
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  course: string | string[] | null;
+  location: "Thunder Bay" | "Nipigon" | "Terrace Bay" | string | null;
+  venue: string | null;
+  sessionDate: string | Date | null;
+  price: string | number | null;
+  notes: string | null;
+  status: "Pending" | "Confirmed" | "Cancelled" | string | null;
+};
 
 export interface ZiteAuthUser {
   id: string;
@@ -114,6 +166,8 @@ export interface ZiteAuthUser {
 }
 
 export const zite = {
+  courses: createTableClient<CoursesRecordType, CoursesRecordInput>('Courses'), // "Courses"
+  bookings: createTableClient<BookingsRecordType, BookingsRecordInput>('Bookings'), // "Bookings"
   sql: createSqlClient(),
   auth: createAuthClient<ZiteAuthUser>(),
 };

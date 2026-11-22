@@ -1,3 +1,270 @@
 {
-  "tables": []
+  "tables": [
+    {
+      "id": "toDDZDMq3Sq",
+      "sdkName": "courses",
+      "name": "Courses",
+      "primaryFieldId": "fmu1tmdaXfu",
+      "fields": [
+        {
+          "id": "fmu1tmdaXfu",
+          "sdkName": "courseName",
+          "definition": {
+            "name": "Course Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhtUM1nrCch",
+          "sdkName": "slug",
+          "definition": {
+            "name": "Slug",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f4rYDsPyiG1",
+          "sdkName": "price",
+          "definition": {
+            "name": "Price",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "$"
+            }
+          }
+        },
+        {
+          "id": "fcFi4tpJMJP",
+          "sdkName": "imageUrl",
+          "definition": {
+            "name": "Image URL",
+            "type": "url",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9EEXBfLuoL",
+          "sdkName": "scheduleStart",
+          "definition": {
+            "name": "Schedule Start",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "f6BNg7XDdSX",
+          "sdkName": "scheduleEnd",
+          "definition": {
+            "name": "Schedule End",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fgk3pm6y6Nu",
+          "sdkName": "classTime",
+          "definition": {
+            "name": "Class Time",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fr3QrcnB5jG",
+          "sdkName": "sortOrder",
+          "definition": {
+            "name": "Sort Order",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 1
+            }
+          }
+        },
+        {
+          "id": "fkVRduSrKMx",
+          "sdkName": "bookings",
+          "definition": {
+            "name": "Bookings",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tvuQ5cq9Ft5",
+              "isInverse": true,
+              "allowMultiple": true,
+              "inverseFieldId": "furkjra97PF"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tvuQ5cq9Ft5",
+      "sdkName": "bookings",
+      "name": "Bookings",
+      "primaryFieldId": "fetRCysG6Ya",
+      "fields": [
+        {
+          "id": "fetRCysG6Ya",
+          "sdkName": "fullName",
+          "definition": {
+            "name": "Full Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9Sae7pKxkb",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6igDFHS8Z2",
+          "sdkName": "phone",
+          "definition": {
+            "name": "Phone",
+            "type": "phone_number",
+            "template": {}
+          }
+        },
+        {
+          "id": "furkjra97PF",
+          "sdkName": "course",
+          "definition": {
+            "name": "Course",
+            "type": "linked_record",
+            "template": {
+              "tableId": "toDDZDMq3Sq",
+              "isInverse": false,
+              "allowMultiple": true,
+              "inverseFieldId": "fkVRduSrKMx"
+            }
+          }
+        },
+        {
+          "id": "fgxg9NE2ws3",
+          "sdkName": "location",
+          "definition": {
+            "name": "Location",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "fsFt",
+                  "label": "Thunder Bay",
+                  "color": "purple"
+                },
+                {
+                  "value": "5RLi",
+                  "label": "Nipigon",
+                  "color": "orange"
+                },
+                {
+                  "value": "wyCy",
+                  "label": "Terrace Bay",
+                  "color": "blue"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fpmU4BFXdme",
+          "sdkName": "venue",
+          "definition": {
+            "name": "Venue",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f7dG1AZqCJP",
+          "sdkName": "sessionDate",
+          "definition": {
+            "name": "Session Date",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "ffvppaY67HF",
+          "sdkName": "price",
+          "definition": {
+            "name": "Price",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "$"
+            }
+          }
+        },
+        {
+          "id": "fxBftoKrZ4D",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "frG3PiYfqYY",
+          "sdkName": "status",
+          "definition": {
+            "name": "Status",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "3EiP",
+                  "label": "Pending",
+                  "color": "purple"
+                },
+                {
+                  "value": "8BGB",
+                  "label": "Confirmed",
+                  "color": "orange"
+                },
+                {
+                  "value": "c1QZ",
+                  "label": "Cancelled",
+                  "color": "blue"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "f1Lt7of3J2a",
+          "sdkName": "bookedAt",
+          "definition": {
+            "name": "Booked At",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    }
+  ]
 }
