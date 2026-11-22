@@ -90,24 +90,44 @@ export function BlogPost({ slug }: { slug: string }) {
   const more = POSTS.filter((x) => x.slug !== slug).slice(0, 3);
   return (
     <article>
-      <div className="mx-auto max-w-3xl px-4 pt-10 md:px-8">
-        <Link to="/blog" className="text-sm text-muted-foreground hover:text-primary">← Back to blog</Link>
-        <div className="mt-6"><Meta p={p} /></div>
-        <h1 className="mt-3 font-display text-4xl font-bold leading-tight md:text-5xl">{p.title}</h1>
-        <p className="mt-4 text-lg text-muted-foreground">{p.excerpt}</p>
+      <header className="bg-secondary text-secondary-foreground">
+        <div className="mx-auto max-w-4xl px-4 pb-40 pt-12 text-center md:px-8 md:pb-48">
+          <Link to="/blog" className="inline-flex items-center gap-1 text-sm opacity-70 transition hover:text-primary hover:opacity-100">← Back to blog</Link>
+          <span className="mx-auto mt-8 block w-fit rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground">{p.category}</span>
+          <h1 className="font-display mx-auto mt-5 max-w-3xl text-3xl font-extrabold leading-tight md:text-5xl">{p.title}</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg opacity-75">{p.excerpt}</p>
+          <div className="mt-6 flex items-center justify-center gap-4 text-sm opacity-70">
+            <span>{fmt(p.date)}</span><span className="h-1 w-1 rounded-full bg-current" />
+            <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{p.readMins} min read</span>
+          </div>
+        </div>
+      </header>
+      <div className="mx-auto -mt-32 max-w-5xl px-4 md:-mt-40 md:px-8">
+        <img src={p.image} alt="" className="aspect-[16/8] w-full rounded-2xl object-cover shadow-2xl" />
       </div>
-      <img src={p.image} alt="" className="mx-auto mt-8 aspect-[21/9] w-full max-w-5xl object-cover md:rounded-2xl" />
-      <div className="mx-auto max-w-3xl space-y-5 px-4 py-10 text-lg leading-relaxed md:px-8">
-        {p.body.map((t, i) => <p key={i}>{t}</p>)}
-        <div className="!mt-10 rounded-xl bg-primary/10 p-6">
-          <p className="font-display text-xl font-bold">Ready to get certified?</p>
-          <Link to="/course" className="mt-3 inline-flex rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">Browse courses</Link>
+      <div className="mx-auto max-w-[680px] px-4 py-14 md:px-0">
+        <div className="space-y-6 text-[17px] leading-8 text-foreground/85">
+          {p.body.map((t, i) => (
+            <p key={i} className={i === 0 ? 'text-xl leading-9 text-foreground first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-6xl first-letter:font-extrabold first-letter:leading-[0.9] first-letter:text-primary' : ''}>{t}</p>
+          ))}
+        </div>
+        <div className="mt-14 flex flex-col items-start justify-between gap-5 rounded-2xl border bg-card p-7 shadow-sm sm:flex-row sm:items-center">
+          <div>
+            <p className="font-display text-xl font-extrabold">Ready to get certified?</p>
+            <p className="mt-1 text-sm text-muted-foreground">Book a Red Cross course near you in minutes.</p>
+          </div>
+          <Link to="/course" className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Browse courses <ArrowRight className="h-4 w-4" /></Link>
         </div>
       </div>
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <h2 className="mb-6 font-display text-2xl font-bold">More articles</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{more.map((x) => <Card key={x.slug} p={x} />)}</div>
-      </div>
+      <section className="border-t bg-muted/40 py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <h2 className="font-display text-2xl font-extrabold md:text-3xl">More articles</h2>
+            <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">View all</Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{more.map((x) => <Card key={x.slug} p={x} />)}</div>
+        </div>
+      </section>
     </article>
   );
 }
