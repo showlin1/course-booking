@@ -38,6 +38,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   return <DemoCtx.Provider value={{ db, setDb, reset }}>{children}</DemoCtx.Provider>;
 }
 
+// Published courses for the public site, managed from Admin → Course Management.
+export function usePublicCourses() {
+  const { db } = useContext(DemoCtx);
+  const courses = (db?.courses ?? []).filter((c) => c.status === 'published').map((c) => ({ ...c, imageUrl: c.image }));
+  return { courses, loading: !db };
+}
+
 export const seatsTaken = (db: DemoDb, sessionId: string) =>
   db.bookings.filter((b) => b.sessionId === sessionId && b.status !== 'cancelled')
     .reduce((n, b) => n + b.participants.filter((p) => p.status === 'registered').length, 0);

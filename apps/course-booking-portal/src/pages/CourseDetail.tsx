@@ -3,11 +3,12 @@ import { CheckCircle2, MapPin } from 'lucide-react';
 import { Button } from '@project/components/ui/button';
 import { Skeleton } from '@project/components/ui/skeleton';
 import { COMPLETION, DETAIL_IMAGES, HIGHLIGHTS, LEARN } from '../content';
-import { money, useCourses } from '../courses';
+import { money } from '../courses';
+import { usePublicCourses } from '../demo/store';
 
 export default function CourseDetail() {
   const { slug } = useParams();
-  const { courses, loading } = useCourses();
+  const { courses, loading } = usePublicCourses();
   const c = courses.find((x) => x.slug === slug);
   if (loading) return <div className="mx-auto max-w-7xl p-8"><Skeleton className="h-96" /></div>;
   if (!c) return <div className="p-16 text-center">Course not found. <Link to="/course" className="text-primary underline">Back to courses</Link></div>;
@@ -25,6 +26,8 @@ export default function CourseDetail() {
               <span key={l} className="inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-sm"><MapPin className="h-3.5 w-3.5 text-primary" />{l}</span>
             ))}
           </div>
+          {c.description && <p className="mt-5 text-muted-foreground">{c.description}</p>}
+          <p className="mt-2 text-sm text-muted-foreground">{c.duration}{c.sessionsCount > 1 && ` · ${c.sessionsCount} sessions`}</p>
           <p className="mt-6 text-3xl font-bold text-primary">{money(c.price)}</p>
           <Button asChild size="lg" className="mt-6 w-full sm:w-auto"><Link to={book}>Browse Date &amp; Time</Link></Button>
         </div>

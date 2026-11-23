@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
-import { useCourses } from '../courses';
+import { usePublicCourses } from '../demo/store';
 import { LOCATIONS } from '../content';
 
 const link = ({ isActive }: { isActive: boolean }) =>
   `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-foreground'}`;
 
 export default function Header() {
-  const { courses } = useCourses();
+  const { courses } = usePublicCourses();
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">

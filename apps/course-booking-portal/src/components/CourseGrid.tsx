@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@project/components/ui/skeleton';
-import { money, useCourses } from '../courses';
+import { money } from '../courses';
+import { usePublicCourses } from '../demo/store';
 
 export default function CourseGrid() {
-  const { courses, loading } = useCourses();
+  const { courses, loading } = usePublicCourses();
   return (
     <div>
       <h2 className="font-display text-3xl font-bold md:text-4xl">Our Courses</h2>
