@@ -2,13 +2,13 @@
 
 import { createCaller } from 'zitejs/caller';
 
-import type { default as _CreateBookingEp } from '../src/api/createBooking';
+import type { default as _CheckAdminEp } from '../src/api/checkAdmin';
 import type { default as _ListCoursesEp } from '../src/api/listCourses';
 
-type _CreateBookingCfg = typeof _CreateBookingEp;
-export type CreateBookingInputType = NonNullable<_CreateBookingCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_CreateBookingCfg['execute']>[0]['input'];
-export type CreateBookingOutputType = Awaited<ReturnType<_CreateBookingCfg['execute']>>;
-export const createBooking = createCaller<CreateBookingInputType, CreateBookingOutputType>('createBooking');
+type _CheckAdminCfg = typeof _CheckAdminEp;
+export type CheckAdminInputType = NonNullable<_CheckAdminCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_CheckAdminCfg['execute']>[0]['input'];
+export type CheckAdminOutputType = Awaited<ReturnType<_CheckAdminCfg['execute']>>;
+export const checkAdmin = createCaller<CheckAdminInputType, CheckAdminOutputType>('checkAdmin');
 
 type _ListCoursesCfg = typeof _ListCoursesEp;
 export type ListCoursesInputType = NonNullable<_ListCoursesCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_ListCoursesCfg['execute']>[0]['input'];
@@ -17,6 +17,6 @@ export const listCourses = createCaller<ListCoursesInputType, ListCoursesOutputT
 
 
 export const api = {
-  createBooking,
+  checkAdmin,
   listCourses,
 };

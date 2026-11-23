@@ -8,9 +8,10 @@ type Props = {
   selected: Date;
   onSelect: (d: Date) => void;
   isAvailable: (d: Date) => boolean;
+  strict?: boolean; // disable every day that isn't available
 };
 
-export default function BookingCalendar({ month, setMonth, selected, onSelect, isAvailable }: Props) {
+export default function BookingCalendar({ month, setMonth, selected, onSelect, isAvailable, strict }: Props) {
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) });
   const lead = getDay(days[0]);
   const today = startOfDay(new Date());
@@ -37,10 +38,10 @@ export default function BookingCalendar({ month, setMonth, selected, onSelect, i
             <button
               key={d.toISOString()}
               onClick={() => onSelect(d)}
-              disabled={d < today}
+              disabled={d < today || (!!strict && !avail)}
               className={cn(
                 'relative mx-auto grid h-10 w-10 place-items-center rounded text-sm transition',
-                sel ? 'bg-primary font-semibold text-primary-foreground' : avail ? 'font-semibold hover:bg-accent' : 'text-muted-foreground/50',
+                sel && avail ? 'bg-primary font-semibold text-primary-foreground' : avail ? 'font-semibold hover:bg-accent' : 'text-muted-foreground/50',
               )}
             >
               {format(d, 'd')}

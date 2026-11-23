@@ -1,128 +1,125 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { format, startOfDay, startOfMonth } from 'date-fns';
-import { CheckCircle2, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { AlertCircle, Check, CreditCard, Loader2, Lock } from 'lucide-react';
 import { Button } from '@project/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { Skeleton } from '@project/components/ui/skeleton';
 import { cn } from '@project/components/lib/utils';
-import { LOCATIONS } from '../content';
-import { money, parseDate, useCourses } from '../courses';
-import BookingCalendar from '../components/BookingCalendar';
-import BookingForm from '../components/BookingForm';
+import { money } from '../courses';
+import { seatsTaken, useDemo } from '../demo/store';
+import ScheduleStep from '../components/booking/ScheduleStep';
+import SummaryCard from '../components/booking/SummaryCard';
+import DetailsStep, { AppliedPromo, Details } from '../components/booking/DetailsStep';
 
-export type Slot = { location: string; venue: string };
+const STEPS = ['Date & Location', 'Summary', 'Participants', 'Checkout'];
 
 export default function Book() {
   const { slug } = useParams();
-  const { courses, loading } = useCourses();
-  const course = courses.find((c) => c.slug === slug);
-  const today = startOfDay(new Date());
-  const [filter, setFilter] = useState('All');
-  const [selected, setSelected] = useState(today);
-  const [month, setMonth] = useState(startOfMonth(today));
-  const [slot, setSlot] = useState<Slot | null>(null);
-  const [step, setStep] = useState<'schedule' | 'details' | 'done'>('schedule');
-  const [moreInfo, setMoreInfo] = useState(true);
+  const nav = useNavigate();
+  const demo = useDemo();
+  const { db } = demo;
+  const [step, setStep] = useState(0);
+  const [sel, setSel] = useState({ cityId: '', subCityId: '', sessionId: '' });
+  const [d, setD] = useState<Details>({ name: '', email: '', phone: '', count: 1, extra: [] });
+  const [promo, setPromo] = useState<AppliedPromo>(null);
+  const [bookingId, setBookingId] = useState<string>();
+  const [paying, setPaying] = useState<'idle' | 'creating' | 'gateway' | 'processing'>('idle');
+  const [payError, setPayError] = useState('');
 
-  const range = useMemo(() => course && { start: parseDate(course.scheduleStart), end: parseDate(course.scheduleEnd) }, [course]);
-  const isAvailable = (d: Date) => !!range && d >= today && d >= range.start && d <= range.end;
-  const firstAvailable = range ? (range.start > today ? range.start : today <= range.end ? today : null) : null;
-
-  if (loading) return <div className="mx-auto max-w-7xl p-8"><Skeleton className="h-[480px]" /></div>;
+  if (!db) return <div className="mx-auto max-w-7xl p-8"><Skeleton className="h-[480px]" /></div>;
+  const course = db.courses.find((c) => c.slug === slug && c.status === 'published');
   if (!course) return <div className="p-16 text-center">Course not found. <Link to="/course" className="text-primary underline">Back to courses</Link></div>;
 
-  const slots: Slot[] = LOCATIONS.filter((l) => filter === 'All' || l.name === filter).flatMap((l) => l.venues.map((venue) => ({ location: l.name, venue })));
-  const avail = isAvailable(selected);
-  const pick = (d: Date) => { setSelected(d); setSlot(null); };
-  const jumpNext = () => { if (firstAvailable) { pick(firstAvailable); setMonth(startOfMonth(firstAvailable)); } };
+  const session = db.sessions.find((s) => s.id === sel.sessionId);
+  const seats = session ? session.capacity - seatsTaken(db, session.id) : 1;
+  const subtotal = course.price * d.count;
+  const discount = promo?.discount ?? 0;
 
-  if (step === 'done') return <Done course={course.name} date={selected} slot={slot!} />;
+  const pay = async () => {
+    setPayError(''); setPaying('creating');
+    const id = await demo.createPendingBooking({
+      sessionId: sel.sessionId, courseId: course.id, cityId: sel.cityId, subCityId: sel.subCityId,
+      contact: { name: d.name, email: d.email, phone: d.phone },
+      participants: [{ name: d.name, email: d.email, phone: d.phone, status: 'registered' }, ...d.extra.map((p) => ({ ...p, status: 'registered' as const }))],
+      subtotal, discount, total: subtotal - discount, promoCode: promo?.code,
+    }, bookingId);
+    setBookingId(id); setPaying('gateway');
+  };
+  const finish = async (outcome: 'success' | 'failure') => {
+    setPaying('processing');
+    const ok = await demo.processPayment(bookingId!, outcome);
+    if (ok) nav(`/booking-confirmation?id=${bookingId}`);
+    else { setPaying('idle'); setPayError('Your payment could not be completed. No charge was made — please try again.'); }
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-      <h1 className="font-display text-3xl font-bold md:text-4xl">Schedule your course</h1>
-      <p className="mt-3 text-muted-foreground">See available dates and times, and book what works for you</p>
-      <div className="mt-6 flex items-center gap-4 border-t pt-4 text-sm">
-        <span className="text-muted-foreground">Filter by:</span>
-        <Select value={filter} onValueChange={(v) => { setFilter(v); setSlot(null); }}>
-          <SelectTrigger className="w-56 border-none bg-transparent shadow-none"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">Location (All)</SelectItem>
-            {LOCATIONS.map((l) => <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_280px]">
+      <h1 className="font-display text-3xl font-extrabold md:text-4xl">Book your course</h1>
+      <ol className="mt-6 flex flex-wrap gap-2">
+        {STEPS.map((s, i) => (
+          <li key={s} className={cn('flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold', i === step ? 'border-primary bg-primary text-primary-foreground' : i < step ? 'border-primary/40 text-primary' : 'text-muted-foreground')}>
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-background/20">{i < step ? <Check className="h-3 w-3" /> : i + 1}</span>{s}
+          </li>
+        ))}
+      </ol>
+      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
         <div>
-          {step === 'schedule' ? (
-            <>
-              <div className="flex items-center justify-between border-b pb-3">
-                <h2 className="font-display text-xl font-bold">Select a date and time</h2>
-                <span className="hidden text-sm text-muted-foreground sm:inline">Time zone: Eastern Standard Time (EST)</span>
+          {step === 0 && <>
+            <ScheduleStep courseId={course.id} {...sel} onChange={(p) => setSel((s) => ({ ...s, ...p }))} />
+            <div className="mt-6 flex justify-end"><Button disabled={!sel.sessionId} onClick={() => setStep(1)}>Continue</Button></div>
+          </>}
+          {step === 1 && <>
+            <SummaryCard course={course} {...sel} count={d.count} discount={discount} promoCode={promo?.code} />
+            <div className="mt-6 flex justify-between"><Button variant="outline" onClick={() => setStep(0)}>Back</Button><Button onClick={() => setStep(2)}>Continue to Checkout</Button></div>
+          </>}
+          {step === 2 && <DetailsStep d={d} set={setD} maxCount={Math.min(10, seats)} courseId={course.id} subtotal={subtotal} promo={promo} setPromo={setPromo} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
+          {step === 3 && (
+            <div className="space-y-6">
+              <div className="rounded-xl border bg-card p-6">
+                <h3 className="font-display text-lg font-bold">Participant details</h3>
+                <p className="mt-2 text-sm">{d.name} · {d.email} · {d.phone}</p>
+                {d.extra.map((p, i) => <p key={i} className="text-sm text-muted-foreground">Participant {i + 2}: {p.name}{p.email && ` · ${p.email}`}</p>)}
               </div>
-              <div className="mt-6 grid gap-10 md:grid-cols-2">
-                <BookingCalendar month={month} setMonth={setMonth} selected={selected} onSelect={pick} isAvailable={isAvailable} />
-                <div>
-                  <p>Availability for {format(selected, 'EEEE, MMMM d')}</p>
-                  {!avail ? (
-                    <>
-                      <p className="text-muted-foreground">No availability</p>
-                      {firstAvailable && <Button className="mt-6 w-full sm:w-72" onClick={jumpNext}>Check Next Availability</Button>}
-                    </>
-                  ) : (
-                    <div className="mt-4 max-h-[380px] space-y-2 overflow-y-auto pr-1">
-                      {slots.map((s) => {
-                        const on = slot?.venue === s.venue;
-                        return (
-                          <button key={s.venue} onClick={() => setSlot(s)} className={cn('w-full rounded border p-3 text-left transition', on ? 'border-primary bg-accent' : 'bg-card hover:border-primary/60')}>
-                            <p className="text-sm font-semibold">{course.classTime}</p>
-                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{s.venue}, {s.location}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+              <div className="rounded-xl border bg-card p-6">
+                <h3 className="flex items-center gap-2 font-display text-lg font-bold"><Lock className="h-4 w-4 text-primary" />Secure payment</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Card details are entered on the payment provider's secure page — never on this site.</p>
+                {payError && <p className="mt-4 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"><AlertCircle className="h-4 w-4" />{payError}</p>}
+                {paying === 'gateway' || paying === 'processing' ? (
+                  <div className="mt-5 rounded-lg border-2 border-dashed border-primary/40 p-5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-primary">Demo payment — not connected</p>
+                    <p className="mt-1 text-sm text-muted-foreground">A real payment provider will appear here once checkout is connected. Simulate an outcome:</p>
+                    {paying === 'processing' ? <p className="mt-4 flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Verifying payment…</p> : (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Button onClick={() => finish('success')}>Simulate successful payment</Button>
+                        <Button variant="outline" onClick={() => finish('failure')}>Simulate failed payment</Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-5 flex justify-between">
+                    <Button variant="outline" onClick={() => setStep(2)} disabled={paying !== 'idle'}>Back</Button>
+                    <Button size="lg" onClick={pay} disabled={paying !== 'idle'}>
+                      {paying === 'creating' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                      {payError ? 'Retry Payment' : `Confirm & Pay ${money(subtotal - discount)}`}
+                    </Button>
+                  </div>
+                )}
               </div>
-            </>
-          ) : (
-            <BookingForm course={course} date={selected} slot={slot!} onBack={() => setStep('schedule')} onDone={() => setStep('done')} />
-          )}
-        </div>
-
-        <aside>
-          <h2 className="font-display border-b pb-3 text-xl font-bold">Course details</h2>
-          <p className="mt-4">{course.name}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{money(course.price)}</p>
-          <button onClick={() => setMoreInfo(!moreInfo)} className="mt-3 flex w-full items-center justify-between text-sm text-muted-foreground">
-            {moreInfo ? 'Less details' : 'More details'} {moreInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          {moreInfo && (
-            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-              <p>Course runs: {format(range!.start, 'MMM d, yyyy')} – {format(range!.end, 'MMM d, yyyy')}</p>
-              <p>Class time: {course.classTime}</p>
-              {avail && <p>Selected: {format(selected, 'EEE, MMM d, yyyy')}</p>}
-              {slot && <p>{slot.venue}, {slot.location}</p>}
             </div>
           )}
-          {step === 'schedule' && <Button className="mt-8 w-full" disabled={!slot || !avail} onClick={() => setStep('details')}>Next</Button>}
+        </div>
+        <aside className="space-y-6">
+          <div className="overflow-hidden rounded-xl border bg-card">
+            {course.image && <img src={course.image} alt="" className="aspect-video w-full object-cover" />}
+            <div className="p-5">
+              <h2 className="font-display text-lg font-bold leading-snug">{course.name}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{course.duration}{course.sessionsCount > 1 && ` · ${course.sessionsCount} sessions`}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{course.description}</p>
+              <p className="mt-4 font-display text-2xl font-extrabold text-primary">{money(course.price)}</p>
+            </div>
+          </div>
+          {step >= 2 && <SummaryCard course={course} {...sel} count={d.count} discount={discount} promoCode={promo?.code} />}
         </aside>
       </div>
-    </div>
-  );
-}
-
-function Done({ course, date, slot }: { course: string; date: Date; slot: Slot }) {
-  return (
-    <div className="mx-auto max-w-xl px-4 py-24 text-center">
-      <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-      <h1 className="font-display mt-4 text-3xl font-bold">You're booked!</h1>
-      <p className="mt-3 text-muted-foreground">{course}</p>
-      <p className="mt-1 font-medium">{format(date, 'EEEE, MMMM d, yyyy')}</p>
-      <p className="text-muted-foreground">{slot.venue}, {slot.location}</p>
-      <Button asChild className="mt-8"><Link to="/course">Back to courses</Link></Button>
     </div>
   );
 }
